@@ -1,103 +1,48 @@
 package com.example.tripservice.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 @Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Trip {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String tripName;
+    private Integer tripSize;
     private String destination;
-    private String startingPoint;
+    private Integer duration;
+    private String modeOfTransport;
+    private Integer ageRequirement;
+    private String genderRequirement;
     private LocalDate startDate;
-    private LocalDate endDate;
-    private int size; // Maximum group size
-    private String genderRestrictions; // Male, Female, Unisex, etc.
-    private String ageRestrictions; // Age range (e.g., 18-30)
-    private double estimatedCost;
-    private String details;
-
-    public String getStartingPoint() {
-        return startingPoint;
+    private String description;
+    @ElementCollection
+    @CollectionTable(name = "trip_hashtags", joinColumns = @JoinColumn(name = "trip_id"))
+    @Column(name = "hashtag")
+    private Set<String> hashtags;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
-    public int getSize() {
-        return size;
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
-
-    public String getAgeRestrictions() {
-        return ageRestrictions;
-    }
-
-    public void setAgeRestrictions(String ageRestrictions) {
-        this.ageRestrictions = ageRestrictions;
-    }
-
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getDetails() {
-        return details;
-    }
-
-    public void setDetails(String details) {
-        this.details = details;
-    }
-
-    public double getEstimatedCost() {
-        return estimatedCost;
-    }
-
-    public void setEstimatedCost(double estimatedCost) {
-        this.estimatedCost = estimatedCost;
-    }
-
-    public String getGenderRestrictions() {
-        return genderRestrictions;
-    }
-
-    public void setGenderRestrictions(String genderRestrictions) {
-        this.genderRestrictions = genderRestrictions;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setStartingPoint(String startingPoint) {
-        this.startingPoint = startingPoint;
-    }
-
-    public String getDestination() {
-        return destination;
-    }
-
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
-    // Getters and Setters
 }
+
+

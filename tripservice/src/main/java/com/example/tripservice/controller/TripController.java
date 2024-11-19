@@ -7,7 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -16,42 +18,63 @@ public class TripController {
     @Autowired
     private TripService tripService;
 
-    @PostMapping
-    public ResponseEntity<Trip> createTrip(@RequestBody Trip trip, @RequestHeader("Username") String username) {
+    @GetMapping
+    public ResponseEntity<List<Trip>> getAllTrips() {
+        return ResponseEntity.ok(tripService.getAllTrips());
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getTripById(@PathVariable Long id) {
         try {
-            Trip newTrip = tripService.createTrip(trip, username);
-            return new ResponseEntity<>(newTrip, HttpStatus.CREATED);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+            Optional<Trip> tripOptional = tripService.getTripById(id);
+
+            if (tripOptional.isPresent()) {
+                return ResponseEntity.ok(tripOptional.get()); // Returns ResponseEntity<Trip>
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Trip with ID: " + id + " not found."); // Returns ResponseEntity<String>
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching trip with ID: " + id + ". " + e.getMessage());
         }
     }
 
-    @GetMapping
-    public ResponseEntity<List<Trip>> searchTrips(
-            @RequestParam(required = false) String destination,
-            @RequestParam(required = false) String dates,
-            @RequestParam(required = false) Integer size) {
-        List<Trip> trips = tripService.searchTrips(destination, dates, size);
-        return ResponseEntity.ok(trips);
+    @PostMapping
+    public ResponseEntity<Trip> createTrip(@RequestBody Trip trip) {
+        Trip createdTrip = tripService.createTrip(trip);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTrip);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Trip> updateTrip(@PathVariable Long id, @RequestBody Trip trip) {
+    public ResponseEntity<?> updateTrip(@PathVariable Long id, @RequestBody Trip tripDetails) {
         try {
-            Trip updatedTrip = tripService.updateTrip(id, trip);
+            Trip updatedTrip = tripService.updateTrip(id, tripDetails);
             return ResponseEntity.ok(updatedTrip);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Trip with ID: " + id + " not found.");
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTrip(@PathVariable Long id) {
+    public ResponseEntity<?> deleteTrip(@PathVariable Long id) {
         try {
             tripService.deleteTrip(id);
             return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Trip with ID: " + id + " not found.");
+        }
+    }
+    @GetMapping("/updated-since")
+    public ResponseEntity<List<Trip>> getUpdatedTrips(@RequestParam String timestamp) {
+        try {
+            LocalDateTime updatedSince = LocalDateTime.parse(timestamp); // Parse the timestamp
+            List<Trip> updatedTrips = tripService.findTripsUpdatedSince(updatedSince);
+            return ResponseEntity.ok(updatedTrips);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Return 400 for invalid timestamp
         }
     }
 }

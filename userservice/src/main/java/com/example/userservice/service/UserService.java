@@ -6,6 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -13,46 +19,40 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public User registerUser(User user) {
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public Optional<User> getUserById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Transactional
+    public User createUser(User user) {
         return userRepository.save(user);
     }
 
-    public Optional<User> getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
+    @Transactional
+    public User updateUser(Long id, User userDetails) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id " + id));
 
-    public User updateUser(Long id, User user) {
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        existingUser.setUsername(user.getUsername());
-        existingUser.setPassword(user.getPassword());
-        existingUser.setEmail(user.getEmail());
-        existingUser.setAddress(user.getAddress());
-        existingUser.setAge(user.getAge());
-        existingUser.setGender(user.getGender());
-        existingUser.setLanguage(user.getLanguage());
-        return userRepository.save(existingUser);
-    }
-    public String getGenderByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return user.getGender();
+        user.setName(userDetails.getName());
+        user.setAge(userDetails.getAge());
+        user.setGender(userDetails.getGender());
+        user.setCity(userDetails.getCity());
+        user.setAbout(userDetails.getAbout());
+        user.setInterests(userDetails.getInterests());
+        user.setPlacesVisited(userDetails.getPlacesVisited());
+
+        return userRepository.save(user);
     }
 
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
-    }
-    public Integer getAgeByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return user.getAge();
-    }
-    public boolean isUserRegistered(String username) {
-        return userRepository.findByUsername(username).isPresent();
-    }
-    public void deleteUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        userRepository.delete(user);
     }
 }
